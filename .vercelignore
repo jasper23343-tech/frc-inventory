@@ -1,0 +1,5 @@
+server.py
+__pycache__
+api/__pycache__
+*.pyc
+.claude

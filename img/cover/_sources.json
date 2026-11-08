@@ -1,0 +1,222 @@
+{
+ "8-32-bolt": {
+  "src": "WCP",
+  "url": "https://cdn.shopify.com/s/files/1/0440/0326/2624/files/WCP-2249.png"
+ },
+ "8-32-nut": {
+  "src": "WCP",
+  "url": "https://cdn.shopify.com/s/files/1/0440/0326/2624/files/WCP-0325.png"
+ },
+ "10-32-nylock": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-1042_4a44a400-e86c-48dc-8283-42821d1d74a8.jpg"
+ },
+ "10-32-shcs": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-1056_8ecb2530-f3fb-4646-83f1-0bc98149d9a6.jpg"
+ },
+ "spacers": {
+  "src": "REV Robotics",
+  "url": "https://cdn11.bigcommerce.com/s-t3eo8vwp22/images/stencil/590x590/products/672/2836/Untitled-20__68385.1651590731.png"
+ },
+ "collar": {
+  "src": "REV Robotics",
+  "url": "https://cdn11.bigcommerce.com/s-t3eo8vwp22/images/stencil/590x590/products/977/3883/REV-41-1327-1629_ShaftCollarFamily_FINAL_v1__46328.1791304665.png"
+ },
+ "bearing": {
+  "src": "WCP",
+  "url": "https://cdn.shopify.com/s/files/1/0440/0326/2624/files/WCP-2057.png"
+ },
+ "washer": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-1523_87ca9f06-55de-4e78-89b1-2c317e877d34.jpg"
+ },
+ "pwm": {
+  "src": "REV Robotics",
+  "url": "https://cdn11.bigcommerce.com/s-t3eo8vwp22/images/stencil/590x590/products/962/3832/REV-11-1130-31-1817_PWMCables_FAMILY_FINAL_v2__75672.1779120505.png"
+ },
+ "gears": {
+  "src": "WCP",
+  "url": "https://cdn.shopify.com/s/files/1/0440/0326/2624/files/BND-0051_109e112f-d776-45f7-a029-9a3749a80808.png"
+ },
+ "belts": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-5209_1_X9FfagInKTE0jKw-YF3sZQ.jpg"
+ },
+ "rev-ion": {
+  "src": "REV Robotics",
+  "url": "https://cdn11.bigcommerce.com/s-t3eo8vwp22/images/stencil/590x590/products/919/3611/ION-Bundles-12__04851.1761066243.png"
+ },
+ "chain": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-5499_55405ab6-f3c8-40d9-931c-705019bc47c1.jpg"
+ },
+ "wire": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-4698-25_739fd2ef-4bbd-458c-9f37-afe3af4655ee.jpg"
+ },
+ "etape": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-ElectricalTape_1_d39108d0-d359-487f-8db3-d7f31dcc4e02.jpg"
+ },
+ "gription": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-5627_b3dd03df-d9c3-4dc3-b335-115ff645bd30.jpg"
+ },
+ "wire-bonded": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-3082_wire_817bf00c-7ba2-4e35-8d87-de22f44fccc6.jpg"
+ },
+ "usb": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-USBAtoUSBB22_1_cb704f49-51e9-47d2-af75-c05b1fef5ea2.jpg"
+ },
+ "breaker40": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-0288_0cc34b24-5a39-445e-a01f-e68db8cf438e.jpg"
+ },
+ "wago": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-WAGOSplicingConnectors.jpg"
+ },
+ "can": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-CanLockingCable_1_8ae66802-a9e8-44ef-952f-8f24b34bd610.jpg"
+ },
+ "crimp-red": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-4387.jpg"
+ },
+ "mp-input": {
+  "src": "REV Robotics",
+  "url": "https://cdn11.bigcommerce.com/s-t3eo8vwp22/images/stencil/590x590/products/808/3201/REV-21-2127-MAXPlanetaryMotorOutputShaft-FINAL__83521.1698077270.1280.1280__65753.1698085692.1280.1280__08721.1703701033.png"
+ },
+ "mp-coupler": {
+  "src": "REV Robotics",
+  "url": "https://cdn11.bigcommerce.com/s-t3eo8vwp22/images/stencil/590x590/products/820/3482/MAXPlanetary_Input_Couplers-Hero-FINAL__44118.1739478661.png"
+ },
+ "cart-31": {
+  "src": "REV Robotics",
+  "url": "https://cdn11.bigcommerce.com/s-t3eo8vwp22/images/stencil/590x590/products/617/3291/REV-21-2101-MAXPlanetary-Cartridge-3-Hero-FINAL__56429.1710776946.png"
+ },
+ "cart-41": {
+  "src": "REV Robotics",
+  "url": "https://cdn11.bigcommerce.com/s-t3eo8vwp22/images/stencil/590x590/products/618/3294/REV-21-2102-MAXPlanetary-Cartridge-4-Hero-FINAL__35074.1710778602.png"
+ },
+ "cart-51": {
+  "src": "REV Robotics",
+  "url": "https://cdn11.bigcommerce.com/s-t3eo8vwp22/images/stencil/590x590/products/619/3295/REV-21-2103-MAXPlanetary-Cartridge-5-Hero-FINAL__75170.1710777022.png"
+ },
+ "cart-brake": {
+  "src": "REV Robotics",
+  "url": "https://cdn11.bigcommerce.com/s-t3eo8vwp22/images/stencil/590x590/products/922/3621/1_1Brake_HERO_Final__37110.1763502507.png"
+ },
+ "lasercan": {
+  "src": "Grapple Robotics",
+  "url": "https://grapplerobotics.au/wp-content/uploads/2023/12/lasercan-600x525.jpg"
+ },
+ "gusset-90": {
+  "src": "WCP",
+  "url": "https://cdn.shopify.com/s/files/1/0440/0326/2624/files/WCP-1061.png"
+ },
+ "gusset-30": {
+  "src": "WCP",
+  "url": "https://cdn.shopify.com/s/files/1/0440/0326/2624/files/WCP-1057.png"
+ },
+ "gussets": {
+  "src": "WCP",
+  "url": "https://cdn.shopify.com/s/files/1/0440/0326/2624/files/Gussets_7bda8aaf-3b88-4ee9-9518-72ce59f1bb1c.png"
+ },
+ "gusset-t": {
+  "src": "WCP",
+  "url": "https://cdn.shopify.com/s/files/1/0440/0326/2624/files/WCP-1070.png"
+ },
+ "ziptie": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-1589_3.jpg"
+ },
+ "cutters": {
+  "src": "Wikimedia Commons",
+  "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c1/Compound_action_wire_cutters.jpg/960px-Compound_action_wire_cutters.jpg"
+ },
+ "xbox": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-5533_ebef67be-79b7-447b-a41f-37b29158a17f.jpg"
+ },
+ "wrench": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-Wrenches_rDx-49WtKDxMyG1c7r1eow.jpg"
+ },
+ "screwdriver": {
+  "src": "Wikimedia Commons",
+  "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f4/Screwdriver_set_with_great_variety_of_bits_and_ratchet_screwdriver.jpg/960px-Screwdriver_set_with_great_variety_of_bits_and_ratchet_screwdriver.jpg"
+ },
+ "crimper": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-2672a_0d189739-ea66-44e0-9f29-132bfa3ce3d7.jpg"
+ },
+ "hexkey": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-allenwrench_1_e05cce5b-97a4-4ddf-b567-2676147ee2ec.jpg"
+ },
+ "masking": {
+  "src": "Wikimedia Commons",
+  "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/02/A_Roll_of_Masking_Tape_%2832410677827%29.jpg/960px-A_Roll_of_Masking_Tape_%2832410677827%29.jpg"
+ },
+ "drillbits": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-DrillBits_1_6f713da3-1b0c-47af-8a4a-73b49ee172ea.jpg"
+ },
+ "stepbit": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-3954b.jpg"
+ },
+ "kraken": {
+  "src": "WCP",
+  "url": "https://cdn.shopify.com/s/files/1/0440/0326/2624/files/WCP-0940_5ea3e5cb-fbd2-440a-af41-ed7d48bbbae5.png"
+ },
+ "neo550": {
+  "src": "REV Robotics",
+  "url": "https://cdn11.bigcommerce.com/s-t3eo8vwp22/images/stencil/590x590/products/508/2730/REV-21-1651-NEO550-iso-noflag-FINAL__53096.1650561900.png"
+ },
+ "sparkmax": {
+  "src": "REV Robotics",
+  "url": "https://cdn11.bigcommerce.com/s-t3eo8vwp22/images/stencil/590x590/products/360/2795/MAX_HERO-noflag__60247.1692730069.png"
+ },
+ "bussmann": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-0282a_1_d822de4c-dcfb-4793-861f-07e88cc75137.jpg"
+ },
+ "compliant": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-compliantwheels_1_0ce428d5-dd39-403c-852a-d7830047ff90.jpg"
+ },
+ "star": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-CompliantStar_FrFKW7W2OKJzXq1wIp6vRQ.jpg"
+ },
+ "pulleys": {
+  "src": "AndyMark",
+  "url": "https://cdn.shopify.com/s/files/1/0644/2303/5052/files/am-3404_c9ec6a97-95a4-454f-bd54-4e07257fea42.jpg"
+ },
+ "sprocket": {
+  "src": "WCP",
+  "url": "https://cdn.shopify.com/s/files/1/0440/0326/2624/files/WCP-0559_3705f4a2-02ed-4a74-b787-a39aeb1a97f7.png"
+ },
+ "rev-shcs": {
+  "src": "REV Robotics",
+  "url": "https://cdn11.bigcommerce.com/s-t3eo8vwp22/images/stencil/590x590/products/702/2996/REV-29-0000-10-32-SocketHexCapScrew-New-Hero-FINAL__94714.1666205172.png"
+ },
+ "rev-nut": {
+  "src": "REV Robotics",
+  "url": "https://cdn11.bigcommerce.com/s-t3eo8vwp22/images/stencil/590x590/products/293/1050/REV-29-1016-1__51301.1603467943.png"
+ },
+ "drill": {
+  "src": "Wikimedia Commons",
+  "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/46/Drill-driver.JPG/960px-Drill-driver.JPG"
+ },
+ "hammer": {
+  "src": "Wikimedia Commons",
+  "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/Claw_hammer-1.jpg/960px-Claw_hammer-1.jpg"
+ }
+}

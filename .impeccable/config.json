@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "plus jakarta sans",
+        "createdAt": "2026-11-08T04:37:17.508Z",
+        "reason": "User asked for popular fonts used in app development; Plus Jakarta Sans chosen for that and to match their reference mockup"
+      }
+    ]
+  }
+}
