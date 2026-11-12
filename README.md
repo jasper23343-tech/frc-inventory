@@ -60,6 +60,23 @@ Pick how accurate the count is (Perfect / Good / Rough / Way off) under it.
 "Delete part" is at the bottom of a part's page and in Edit part. Tap it twice (the first tap
 arms it for a few seconds). Deleted parts from `data.js` stay deleted on reload.
 
+## Shared inventory (Supabase)
+
+Without setup, every phone keeps its own copy. To share one inventory with everyone:
+
+1. Make a free project at https://supabase.com (sign in with GitHub works).
+2. In the project: **SQL Editor → New query**, paste all of `supabase.sql`, press **Run**.
+3. **Project Settings → API**: copy the **Project URL** and the **publishable** key
+   (older projects call it the **anon public** key). Never use the `service_role` / secret key.
+4. Put both in `config.js` and push. That's it.
+
+How it works: each part is one row. A change uploads just that part; other people's changes
+are fetched every 6 seconds (and when the app comes back to the front), and cards someone
+else changed flash green. Offline edits wait and upload later ("Offline · will sync" under
+the title). If two people change the same part, the last save wins.
+There's no login yet, so anyone with the link can edit. Rows can't be removed from the
+website (deleting a part marks it deleted), so nobody can wipe the table from the app.
+
 ## Sets
 
 `items` on a part (screwdrivers, crimpers, hex keys) lists each tool with its own photo from `img/items/`.

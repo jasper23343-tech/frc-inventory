@@ -19,6 +19,8 @@
   --r-sm: 14px;
   --gutter: 16px;
   --ease: cubic-bezier(.2, .7, .2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-io: cubic-bezier(0.76, 0, 0.24, 1);
   color-scheme: light;
 }
 
@@ -272,10 +274,19 @@ h2 { font-size: 19px; letter-spacing: -0.02em; font-weight: 700; margin: 0; }
 /* ---------- sheets ---------- */
 dialog { border: 0; padding: 0; color: var(--ink); }
 dialog::backdrop { background: rgb(10 10 10 / .45); backdrop-filter: blur(2px); }
+/* sheets slide up on open and back down on close (exit needs Chrome/Edge 117+; elsewhere it just closes) */
+dialog.sheet { transition: transform .42s var(--ease-out), opacity .3s var(--ease-out), overlay .42s allow-discrete, display .42s allow-discrete; }
+dialog.sheet:not([open]) { transform: translateY(32px); opacity: 0; transition-duration: .22s; transition-timing-function: cubic-bezier(.4, 0, 1, 1); }
+dialog.sheet::backdrop { transition: opacity .35s var(--ease-out), overlay .35s allow-discrete, display .35s allow-discrete; }
+dialog.sheet:not([open])::backdrop { opacity: 0; }
+@starting-style {
+  dialog.sheet[open] { transform: translateY(32px); opacity: 0; }
+  dialog.sheet[open]::backdrop { opacity: 0; }
+}
 .sheet {
   width: 100%; max-width: 100%; max-height: 100%; height: 100%; margin: 0; background: var(--bg); overflow: hidden;
 }
-.sheet[open] { display: flex; flex-direction: column; animation: up .32s var(--ease); }
+.sheet[open] { display: flex; flex-direction: column; }
 .sheet.closing { animation: down .22s ease-in forwards; }
 @keyframes up { from { transform: translateY(40px); opacity: 0; } }
 @keyframes down { to { transform: translateY(40px); opacity: 0; } }
@@ -672,3 +683,50 @@ kbd { font: 600 11.5px/1 var(--font, inherit); padding: 2px 6px; border-radius: 
 /* delete */
 .d-delete { margin-top: 18px; }
 .btn.armed { background: var(--warn); color: #fff; box-shadow: none; }
+
+/* ---------- motion ---------- */
+/* grid + places: staggered rise when the filter changes or the tab opens */
+@keyframes rise { from { opacity: 0; transform: translateY(18px) scale(.985); } }
+@keyframes softfade { from { opacity: 0; } }
+.enter > * { animation: rise .62s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 38ms); }
+.fade > * { animation: softfade .28s ease-out both; animation-delay: calc(var(--i, 0) * 12ms); }
+
+/* a card someone else just changed */
+@keyframes flash { 0% { box-shadow: 0 0 0 0 var(--accent), var(--shadow); } 30% { box-shadow: 0 0 0 3px var(--accent), var(--shadow-lift); } 100% { box-shadow: 0 0 0 0 transparent, var(--shadow); } }
+.card.flash, .mini.flash, .row.flash { animation: flash 1.4s var(--ease-out); }
+.card.flash .qty { animation: rise .5s var(--ease-out); }
+
+/* images settle in instead of popping */
+.ph img { transition: transform .5s var(--ease), opacity .45s var(--ease-out); }
+.ph img[data-loading] { opacity: 0; }
+
+/* stock number, status pill and save row */
+.stock .big { display: inline-block; will-change: transform; }
+.status { transition: color .3s var(--ease-out); }
+.save-row { transition: opacity .3s var(--ease-out), transform .35s var(--ease-out); }
+
+/* chips: the selected one eases in */
+.chip { transition: background-color .25s var(--ease-out), color .25s var(--ease-out), border-color .25s var(--ease-out), transform .15s var(--ease); }
+.chip:active { transform: scale(.96); }
+
+/* toast springs up */
+.toast { transition: opacity .25s var(--ease-out), transform .45s cubic-bezier(0.34, 1.56, 0.64, 1) !important; }
+
+/* sync status under the title */
+.sync { display: inline-flex; align-items: center; gap: 7px; margin: 6px 0 0; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.sync i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); position: relative; transition: background-color .3s; }
+.sync[data-state="synced"] i { background: var(--accent); }
+.sync[data-state="offline"] i { background: var(--warn); }
+.sync[data-state="syncing"] i, .sync[data-state="connecting"] i { background: var(--c-good, #2f7de1); }
+.sync[data-state="syncing"] i::after, .sync[data-state="connecting"] i::after { content: ""; position: absolute; inset: -3px; border-radius: 50%; border: 1.5px solid currentColor; color: var(--c-good, #2f7de1); animation: ping 1.1s var(--ease-out) infinite; }
+@keyframes ping { from { transform: scale(.6); opacity: .9; } to { transform: scale(1.6); opacity: 0; } }
+.sync[data-state="local"] { display: none; }
+
+/* tabs: quick cross-fade (View Transitions) */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .28s; animation-timing-function: var(--ease-out); }
+
+@media (prefers-reduced-motion: reduce) {
+  .enter > *, .fade > *, .card.flash, .card.flash .qty { animation: none !important; }
+  dialog.sheet, dialog.sheet::backdrop { transition: none !important; }
+  .sync i::after { display: none; }
+}

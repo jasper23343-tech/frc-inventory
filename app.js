@@ -43,17 +43,24 @@
   }
   // New photos and names in data.js reach saved data without wiping counts.
   // Photos picked in the app (coverImg) and names edited in the app win.
-  function mergeSeed(list) {
-    const seedById = Object.fromEntries(SEED_PARTS.map(p => [p.id, p]));
-    list.forEach(p => {
-      const s = seedById[p.id];
-      if (!s) return;
+  const seedById = Object.fromEntries(SEED_PARTS.map(p => [p.id, p]));
+  const AREA_IDS = new Set(AREAS.map(a => a.id));
+  const OLD_AREAS = { chest: "husky", bench: "husky", lower: "husky" };
+  function seedFix(p) {
+    const s = seedById[p.id];
+    if (s) {
       ["cover", "img", "f"].forEach(k => { if (s[k] !== undefined) p[k] = s[k]; });
       if (!p.nameEdited) p.name = s.name;
       if (!p.placeEdited) { p.area = s.area; p.spot = s.spot; }
       // never counted in the app: follow data.js (e.g. parts that were split up)
       if (p.source === "photo") ["qty", "unit", "min", "conf", "sub", "cat"].forEach(k => { if (s[k] !== undefined) p[k] = s[k]; });
-    });
+    }
+    // parts that point at a place that no longer exists
+    if (!AREA_IDS.has(p.area)) p.area = OLD_AREAS[p.area] || (p.cat === "Electrical" ? "husky-elec" : "husky-mech");
+    return p;
+  }
+  function mergeSeed(list) {
+    list.forEach(seedFix);
     // new parts in data.js (that weren't deleted here)
     const have = new Set(list.map(p => p.id));
     SEED_PARTS.forEach((sp, i) => {
@@ -61,25 +68,189 @@
       const at = list.findIndex(p => p.id === SEED_PARTS[i - 1]?.id);
       list.splice(at < 0 ? list.length : at + 1, 0, { ...clone(sp), reported: SEED_DATE, source: "photo" });
     });
-    // Parts added in the app that point at a place that no longer exists
-    const ids = new Set(AREAS.map(a => a.id));
-    const OLD = { chest: "husky", bench: "husky", lower: "husky" };
-    list.forEach(p => {
-      if (ids.has(p.area)) return;
-      p.area = OLD[p.area] || (p.cat === "Electrical" ? "husky-elec" : "husky-mech");
-    });
     return list;
   }
   let parts = load();
   function save() {
-    try { localStorage.setItem(KEY, JSON.stringify({ parts, deleted: [...deleted] })); return true; }
-    catch (e) { toast("Storage is full. Try a smaller photo."); return false; }
+    try { localStorage.setItem(KEY, JSON.stringify({ parts, deleted: [...deleted] })); }
+    catch (e) { if (!shared) { toast("Storage is full. Try a smaller photo."); return false; } }
+    scheduleSync();
+    return true;
   }
   const byId = id => parts.find(p => p.id === id);
+
+  // ---------- shared inventory (Supabase) ----------
+  // config.js sets window.INVENTORY_BACKEND = { url, key }. Without it the app stays on this device only.
+  // Each part is one row: { id, data (the part), deleted, updated_at }. Changes are sent part by part,
+  // and other people's changes are fetched every few seconds. Last change to a part wins.
+  const BACKEND = window.INVENTORY_BACKEND || {};
+  const shared = !!(BACKEND.url && BACKEND.key);
+  const hash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36) + s.length; };
+  const SYNC_KEY = KEY + "-sync-" + hash(BACKEND.url || ""); // a different database starts fresh
+  const sync = { since: "1970-01-01T00:00:00Z", synced: {}, pending: new Set(), state: shared ? "connecting" : "local", first: true, firstPull: true };
+  try {
+    const m = JSON.parse(localStorage.getItem(SYNC_KEY));
+    if (m) { sync.since = m.since || sync.since; sync.synced = m.synced || {}; (m.pending || []).forEach(id => sync.pending.add(id)); sync.first = !m.since; }
+  } catch {}
+  const saveSyncMeta = () => { try { localStorage.setItem(SYNC_KEY, JSON.stringify({ since: sync.since, synced: sync.synced, pending: [...sync.pending] })); } catch {} };
+
+  function api(path, opts = {}) {
+    const headers = { apikey: BACKEND.key, "Content-Type": "application/json", ...(opts.headers || {}) };
+    if (BACKEND.key.startsWith("eyJ")) headers.Authorization = `Bearer ${BACKEND.key}`; // legacy anon key
+    return fetch(`${BACKEND.url.replace(/\/$/, "")}/rest/v1/${path}`, { ...opts, headers }).then(async r => {
+      if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 160)}`);
+      const text = await r.text();
+      return text ? JSON.parse(text) : null;
+    });
+  }
+
+  // Which parts changed since the last sync (compared by hash), including deletions.
+  function markChanges() {
+    const ids = new Set(parts.map(p => p.id));
+    parts.forEach(p => { if (sync.synced[p.id] !== hash(JSON.stringify(p))) sync.pending.add(p.id); });
+    Object.keys(sync.synced).forEach(id => { if (!ids.has(id) && sync.synced[id] !== "deleted") sync.pending.add(id); });
+    deleted.forEach(id => { if (sync.synced[id] !== "deleted") sync.pending.add(id); });
+  }
+
+  let flushTimer = null, flushing = false;
+  function scheduleSync() {
+    if (!shared) return;
+    markChanges(); saveSyncMeta();
+    clearTimeout(flushTimer); flushTimer = setTimeout(flush, 350);
+  }
+  async function flush() {
+    if (!shared || flushing || !sync.pending.size) return;
+    flushing = true; setSyncState("syncing");
+    const ids = [...sync.pending];
+    const rows = ids.map(id => { const p = byId(id); return p ? { id, data: p, deleted: false } : { id, data: {}, deleted: true }; });
+    try {
+      // small batches keep each request under the size limit when parts carry photos
+      for (let i = 0; i < rows.length; i += 20) {
+        const batch = rows.slice(i, i + 20);
+        await api("parts?on_conflict=id", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=minimal" }, body: JSON.stringify(batch) });
+        batch.forEach(r => {
+          sync.synced[r.id] = r.deleted ? "deleted" : hash(JSON.stringify(r.data));
+          if (sync.synced[r.id] === (byId(r.id) ? hash(JSON.stringify(byId(r.id))) : "deleted")) sync.pending.delete(r.id);
+        });
+      }
+      saveSyncMeta(); setSyncState("synced");
+    } catch (e) {
+      console.warn("sync upload failed", e); setSyncState("offline");
+    } finally { flushing = false; }
+    if (sync.pending.size && sync.state === "synced") flush();
+  }
+
+  // Apply rows from the server. Rows for parts with unsent local changes are skipped (the local edit wins).
+  let remoteIds = [];
+  function applyRows(rows) {
+    let changed = false; remoteIds = [];
+    rows.forEach(r => {
+      if (r.updated_at > sync.since) sync.since = r.updated_at;
+      if (sync.pending.has(r.id)) return;
+      const i = parts.findIndex(p => p.id === r.id);
+      if (r.deleted) {
+        if (i >= 0) { parts.splice(i, 1); changed = true; }
+        if (SEED_PARTS.some(x => x.id === r.id)) deleted.add(r.id);
+        sync.synced[r.id] = "deleted";
+        return;
+      }
+      const p = seedFix({ ...r.data, id: r.id });
+      deleted.delete(r.id);
+      if (i >= 0) { if (JSON.stringify(parts[i]) !== JSON.stringify(p)) { parts[i] = p; changed = true; remoteIds.push(r.id); } }
+      else {
+        const si = SEED_PARTS.findIndex(x => x.id === r.id);
+        const at = si > 0 ? parts.findIndex(x => x.id === SEED_PARTS[si - 1].id) : -1;
+        parts.splice(at < 0 ? (si < 0 ? 0 : parts.length) : at + 1, 0, p); changed = true; remoteIds.push(r.id);
+      }
+      sync.synced[r.id] = hash(JSON.stringify(p));
+    });
+    return changed;
+  }
+
+  let pulling = false;
+  async function pull() {
+    if (!shared || pulling) return;
+    pulling = true;
+    try {
+      const rows = await api(`parts?select=id,data,deleted,updated_at&updated_at=gt.${encodeURIComponent(sync.since)}&order=updated_at.asc&limit=1000`);
+      const changed = applyRows(rows);
+      if (sync.first) {
+        // First time this device connects: send up anything it changed before sharing existed.
+        sync.first = false;
+        const onServer = new Set(rows.map(r => r.id));
+        parts.forEach(p => {
+          if (onServer.has(p.id)) return;
+          if (p.source === "photo" && !p.coverImg && !p.id.startsWith("u-")) sync.synced[p.id] = hash(JSON.stringify(p));
+        });
+        deleted.forEach(id => { if (onServer.has(id)) sync.synced[id] = "deleted"; });
+        markChanges();
+      }
+      if (changed) {
+        try { localStorage.setItem(KEY, JSON.stringify({ parts, deleted: [...deleted] })); } catch {}
+        refresh();
+        if (!sync.firstPull) flashParts(remoteIds);
+        if (detail.open) {
+          const p = byId(detail.dataset.id);
+          if (!p) { closeRoute(); toast("Someone deleted this part"); }
+          else if (draftQty === p.qty || !$("#d-save")?.classList.contains("on")) renderDetail(p);
+        }
+      }
+      sync.firstPull = false;
+      saveSyncMeta();
+      setSyncState(sync.pending.size ? "syncing" : "synced");
+      if (sync.pending.size) flush();
+    } catch (e) {
+      console.warn("sync download failed", e); setSyncState("offline");
+    } finally { pulling = false; }
+  }
+
+  function setSyncState(s) {
+    sync.state = s;
+    const el = $("#sync");
+    if (!el) return;
+    el.dataset.state = s;
+    el.querySelector("span").textContent = { local: "This device only", connecting: "Connecting…", syncing: "Saving…", synced: "Shared · up to date", offline: "Offline · will sync" }[s];
+  }
+  if (shared) {
+    const tick = () => { if (document.visibilityState === "visible") { pull(); if (sync.pending.size) flush(); } };
+    setInterval(tick, 6000);
+    document.addEventListener("visibilitychange", tick);
+    window.addEventListener("online", tick);
+  }
+
   const isLow = p => p.min > 0 && p.qty < p.min;
 
   const ui = { cat: "All", subs: new Set(), area: null, q: "" };
   const subsOf = name => (CATEGORIES.find(c => c.name === name) || { subs: [] }).subs;
+
+  // ---------- motion ----------
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  const EASE_OUT = "cubic-bezier(0.16, 1, 0.3, 1)";
+  // Replay a CSS entrance on a container once (children read --i for their stagger).
+  function enter(el, cls = "enter") {
+    if (!el || reduceMotion.matches) return;
+    el.classList.remove("enter", "fade"); void el.offsetWidth; el.classList.add(cls);
+    clearTimeout(el._enterT); el._enterT = setTimeout(() => el.classList.remove(cls), 1400);
+  }
+  // A number that changed slides in from the side it moved toward.
+  function tick(el, up) {
+    if (!el || reduceMotion.matches || !el.animate) return;
+    el.animate([{ transform: `translateY(${up ? 10 : -10}px)`, opacity: 0.25 }, { transform: "none", opacity: 1 }], { duration: 280, easing: EASE_OUT });
+  }
+  // Cards someone else just changed get a short highlight.
+  function flashParts(ids) {
+    if (!ids.length) return;
+    requestAnimationFrame(() => ids.forEach(id => {
+      document.querySelectorAll(`a[href="#/part/${CSS.escape(encodeURIComponent(id))}"]`).forEach(a => {
+        a.classList.remove("flash"); void a.offsetWidth; a.classList.add("flash");
+        setTimeout(() => a.classList.remove("flash"), 1600);
+      });
+    }));
+  }
+  // Tabs cross-fade with the View Transitions API where it exists.
+  function viewSwap(fn) {
+    if (document.startViewTransition && !reduceMotion.matches) document.startViewTransition(fn); else fn();
+  }
 
   // ---------- helpers ----------
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -227,9 +398,9 @@
     ui.subs.delete(t.dataset.unsub); renderLibrary();
   });
 
-  function card(p) {
+  function card(p, i = 0) {
     const low = isLow(p);
-    return `<a class="card" href="#/part/${encodeURIComponent(p.id)}">
+    return `<a class="card" href="#/part/${encodeURIComponent(p.id)}" style="--i:${Math.min(i, 14)}">
       ${coverHtml(p)}
       ${p.items ? `<span class="set-tag" title="${p.items.length} kinds in this set">${icon.plus}${p.items.length}</span>` : ""}
       <span class="qty${low ? " low" : ""}"><i class="dot c-${p.conf || "rough"}" title="${CONF[p.conf || "rough"].label}"></i>${p.qty}<small>${esc(p.unit || "pcs")}</small></span>
@@ -240,6 +411,7 @@
     </a>`;
   }
 
+  let lastListKey = null, lastListQ = "";
   function renderLibrary() {
     renderChips();
     const list = filtered();
@@ -260,7 +432,12 @@
 
     $("#list-title").textContent = searching ? "Results" : ui.subs.size === 1 ? [...ui.subs][0] : ui.cat !== "All" ? ui.cat : ui.area ? "Everything here" : "All parts";
     $("#list-count").textContent = `${list.length} ${list.length === 1 ? "part" : "parts"}`;
-    $("#grid").innerHTML = list.map(card).join("");
+    const grid = $("#grid");
+    grid.innerHTML = list.map(card).join("");
+    const key = [ui.cat, [...ui.subs].sort().join(","), ui.area].join("|");
+    if (key !== lastListKey) enter(grid);
+    else if (ui.q !== lastListQ) enter(grid, "fade");
+    lastListKey = key; lastListQ = ui.q;
     $("#empty").hidden = list.length > 0;
     $("#lib-sub").textContent = `${parts.length} parts across ${AREAS.length} places`;
     $("#q-clear").hidden = !ui.q;
@@ -273,15 +450,16 @@
   }
 
   // ---------- places ----------
-  function renderPlaces() {
-    $("#places").innerHTML = AREAS.map(a => {
+  function renderPlaces(animate = false) {
+    $("#places").innerHTML = AREAS.map((a, i) => {
       const n = parts.filter(p => p.area === a.id).length;
-      return `<a class="place" href="#/area/${a.id}">
+      return `<a class="place" href="#/area/${a.id}" style="--i:${i}">
         ${a.pic ? `<div class="ph place-pic"><img src="${a.pic}-thumb.jpg" alt="" loading="lazy" decoding="async"></div>` : photo({ img: a.img, f: a.f })}
         <span class="tag num"><i class="pdot" style="--pc:${a.color}"></i>${n} parts</span>
         <div class="meta"><div><h3>${esc(a.name)}</h3><p>${esc(a.blurb)}</p></div><span class="go">${icon.arrow}</span></div>
       </a>`;
     }).join("");
+    if (animate) enter($("#places"));
   }
 
   // ---------- low ----------
@@ -411,6 +589,7 @@
     p.reported = new Date().toISOString(); p.source = "count";
     if (!save()) return;
     detail.querySelector(`[data-item-qty="${i}"]`).textContent = it.qty;
+    tick(detail.querySelector(`[data-item-qty="${i}"]`), d > 0);
     $("#d-qty").textContent = p.qty;
     const st = $("#d-status"); st.className = `status ${isLow(p) ? "low" : "ok"}`; st.textContent = isLow(p) ? "Running low" : "In stock";
     refresh();
@@ -422,7 +601,7 @@
     const p = byId(detail.dataset.id);
     draftQty = Math.max(0, n);
     const q = $("#d-qty");
-    if (!typing) q.value = draftQty;
+    if (!typing && q.value !== String(draftQty)) { const up = draftQty > (parseInt(q.value, 10) || 0); q.value = draftQty; tick(q.closest(".big"), up); }
     fitQty(q);
     const low = p.min > 0 && draftQty < p.min, st = $("#d-status");
     st.className = `status ${low ? "low" : "ok"}`; st.textContent = low ? "Running low" : "In stock";
@@ -1004,12 +1183,12 @@
     const th = localStorage.getItem(THEME_KEY) || "auto";
     menu.innerHTML = `<div class="menu-body">
       <h2 id="m-title">Settings</h2>
-      <p>Everything saves on this device only. No login yet.</p>
+      <p>${shared ? "Changes are shared with everyone using this site. No login yet, so anyone with the link can edit." : "Everything saves on this device only. Add a Supabase project in config.js to share it."}</p>
       <label class="toggle"><input type="checkbox" id="m-admin"${isAdmin() ? " checked" : ""}>
         <span><b>Admin mode</b><small>Tap a part's photo to change it or search the web for a better one</small></span></label>
       <div class="seg" role="group" aria-label="Theme">${["auto", "light", "dark"].map(t => `<button type="button" data-theme-set="${t}" aria-pressed="${t === th}">${t[0].toUpperCase() + t.slice(1)}</button>`).join("")}</div>
       <button class="btn ghost block" type="button" data-export>Download data (JSON)</button>
-      <button class="btn danger block" type="button" data-reset>Reset to photo data</button>
+      <button class="btn danger block" type="button" data-reset>${shared ? "Reload from shared inventory" : "Reset to photo data"}</button>
       <button class="btn block" type="button" data-close>Done</button>
     </div>`;
   }
@@ -1033,6 +1212,11 @@
       const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: "frc-inventory.json" });
       a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     } else if (t.matches("[data-reset]")) {
+      if (shared) {
+        if (!armed(t, "Tap again to reload everything from the shared inventory")) return;
+        try { localStorage.removeItem(KEY); localStorage.removeItem(SYNC_KEY); } catch {}
+        location.reload(); return;
+      }
       if (!armed(t, "Tap again: this erases every count and edit")) return;
       parts = seed(); deleted.clear(); save(); refresh(); menu.close(); toast("Reset to photo data");
     }
@@ -1070,7 +1254,9 @@
   [detail, editor].forEach(d => d.addEventListener("cancel", e => { e.preventDefault(); closeRoute(); }));
 
   function showTab(tab) {
-    ["library", "places", "low"].forEach(v => { $(`#view-${v}`).hidden = v !== tab; });
+    const cur = ["library", "places", "low"].find(v => !$(`#view-${v}`).hidden);
+    const apply = () => ["library", "places", "low"].forEach(v => { $(`#view-${v}`).hidden = v !== tab; });
+    if (cur && cur !== tab) viewSwap(apply); else apply();
     document.querySelectorAll(".dock a[data-tab]").forEach(a => a.dataset.tab === tab ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
   }
 
@@ -1101,7 +1287,7 @@
 
     closeDialogs(null);
     depth = 0;
-    if (a === "places") { base = h; showTab("places"); renderPlaces(); }
+    if (a === "places") { base = h; showTab("places"); renderPlaces(true); }
     else if (a === "low") { base = h; showTab("low"); renderLow(); }
     else if (a === "area" && areaById[id]) {
       base = h; ui.area = id; ui.cat = "All"; ui.subs.clear(); showTab("library"); renderLibrary(); window.scrollTo(0, 0);
@@ -1145,4 +1331,6 @@
   window.addEventListener("hashchange", () => route());
 
   route(true);
+  setSyncState(sync.state);
+  if (shared) { pull(); }
 })();
